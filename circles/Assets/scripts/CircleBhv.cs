@@ -8,6 +8,7 @@ public class CircleBhv : MonoBehaviour
 
     private float _speed;
     private float _size;
+    private RenderTexture _rt;
 
     void Start ()
     {
@@ -18,6 +19,14 @@ public class CircleBhv : MonoBehaviour
         // случайное расположение кружка вдоль верхней границы экрана
         float randPosAcrossScreen = 2 * (Random.value - 0.5f) * (Camera.main.aspect * Camera.main.orthographicSize - _size);
         transform.position = new Vector3(randPosAcrossScreen, Camera.main.orthographicSize - _size, 0);
+
+        // определяем размер текстуры
+        var texSize = TextureSize.Small;
+        if (rndFloat > 0.33)
+            if (rndFloat > 0.66) texSize = TextureSize.Big;
+            else texSize = TextureSize.Mid;
+        _rt = TextureManager.I.GetRandomTexture(texSize); // получем текстуру из менеджера
+        GetComponent<Renderer>().material.mainTexture = _rt;
     }
 
 	void Update ()

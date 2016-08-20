@@ -23,6 +23,16 @@ public class CircleBhv : MonoBehaviour
 	void Update ()
     {
         transform.position -= new Vector3(0, _speed * Time.deltaTime, 0); // движение вниз
+
+        if (Input.GetMouseButtonDown(0))// обработка клика мышкой
+        {
+            Vector3 cursorOnScene = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            Vector3 diff = cursorOnScene - transform.position; // расстояние между центром кружка и курсором
+            diff.z = 0;
+            cursorOnScene.z = 0;
+            if (diff.magnitude < _size) Destroy(gameObject);
+        }
+
         if (transform.position.y < -Camera.main.orthographicSize + _size)
             Destroy(gameObject); // проверка на достижение нижней границы экрана
     }

@@ -7,7 +7,6 @@ public class GameManager : MonoBehaviour
     public float SpawnRate;
     public static GameManager I { get; private set; } 
 
-    private GameObject _circlePrefab;
     void Awake()
     {
         // эрзац-синглтон
@@ -17,23 +16,15 @@ public class GameManager : MonoBehaviour
 
     void Start ()
     {
-        _circlePrefab = Resources.Load("Circle", typeof(GameObject)) as GameObject; // загрузка префаба кружка
-        if (_circlePrefab == null) throw new Exception(" не удалось загрузить Circle");
         StartCoroutine("SpawnCoroutine");// запуск корутины для создания кружков
     }
-	
-
-	void Update ()
-    {
-	
-	}
 
     // корутина для создания кружков
     IEnumerator SpawnCoroutine()
     {
         while (true)
         {
-            Instantiate(_circlePrefab);
+            Instantiate(Scrapyard.I.Prefabs["Circle"]);
             yield return new WaitForSeconds(SpawnRate);
         }
     }

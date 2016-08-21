@@ -1,5 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.IO;
+using System.Runtime.Serialization.Formatters.Binary;
 
 public class CircleBhv : MonoBehaviour
 {
@@ -27,6 +29,8 @@ public class CircleBhv : MonoBehaviour
             else texSize = TextureSize.Mid;
         _rt = TextureManager.I.GetRandomTexture(texSize); // получем текстуру из менеджера
         GetComponent<Renderer>().material.mainTexture = _rt;
+        SendInstantiateRequest(); // просим всех клиентов создать экземпляры ClientCircle 
+        GameServer.I.AfterNewClientConnected += OnAfterNewClientConnected; // подписываемся на подключение клиентов
     }
 
 	void Update ()
@@ -44,5 +48,68 @@ public class CircleBhv : MonoBehaviour
 
         if (transform.position.y < -Camera.main.orthographicSize + _size)
             Destroy(gameObject); // проверка на достижение нижней границы экрана
+    }
+
+    void FixedUpdate()
+    {
+        SendScaleAndPos(); // отправка координат и размера клиентам
+    }
+
+    void OnDestroy()
+    {
+        TextureManager.I.ReleaseTexture(_rt);
+        SendDestroyRequest();
+        GameServer.I.AfterNewClientConnected -= OnAfterNewClientConnected;
+    }
+
+    // запрос на создание экземпляра ClientCircle. С параметром по умолчанию рассылается всем клиентам.
+    void SendInstantiateRequest(int clientId = -1)
+    {
+        Envelope env = new Envelope();
+        env.Addressee = AddresseeType.GameClient;
+        env.SenderInstanceId = this.GetInstanceID();
+        using (var ms = new MemoryStream())
+        {
+            (new BinaryFormatter()).Serialize(ms, new GameClient.InstantiateRequest("ClientCircle"));
+            env.Data = ms.ToArray();
+        }
+        GameServer.I.Send(env, clientId);
+    }
+
+    // отправка клиентам запроса на уничтожение объекта
+    void SendDestroyRequest(int clientId = -1)
+    {
+        Envelope env = new Envelope();
+        env.Addressee = AddresseeType.GameObject;
+        env.SenderInstanceId = this.GetInstanceID();
+        using (var ms = new MemoryStream())
+        {
+            (new BinaryFormatter()).Serialize(ms, new ClientCircleBhv.DestroyRequest());
+            env.Data = ms.ToArray();
+        }
+        GameServer.I.Send(env, clientId);
+    }
+
+    // отправка координат и размера клиентам
+    void SendScaleAndPos(int clientId = -1)
+    {
+        Envelope env = new Envelope();
+        env.Addressee = AddresseeType.GameObject;
+        env.SenderInstanceId = this.GetInstanceID();
+        using (var ms = new MemoryStream())
+        {
+            var request = new ClientCircleBhv.SetPosAndScaleRequest();
+            request.Scale = transform.localScale.ToArray();
+            request.Pos = transform.position.ToArray();
+            (new BinaryFormatter()).Serialize(ms, request);
+            env.Data = ms.ToArray();
+        }
+        GameServer.I.Send(env, clientId);
+    }
+
+    void OnAfterNewClientConnected(int clientId)
+    {
+        SendInstantiateRequest(clientId);
+        SendScaleAndPos(clientId);
     }
 }

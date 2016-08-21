@@ -1,0 +1,7 @@
+ManifestFileVersion: 0
+CRC: 886844659
+AssetBundleManifest:
+  AssetBundleInfos:
+    Info_0:
+      Name: circles_bundle
+      Dependencies: {}

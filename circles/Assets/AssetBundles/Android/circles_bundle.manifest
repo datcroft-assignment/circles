@@ -1,0 +1,40 @@
+ManifestFileVersion: 0
+CRC: 277887553
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 888cbbab0a9e7e24e555d98b53a70599
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 5ea7062480845edb7221bb67fca863df
+HashAppended: 0
+ClassTypes:
+- Class: 1
+  Script: {instanceID: 0}
+- Class: 4
+  Script: {instanceID: 0}
+- Class: 21
+  Script: {instanceID: 0}
+- Class: 23
+  Script: {instanceID: 0}
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 33
+  Script: {instanceID: 0}
+- Class: 43
+  Script: {instanceID: 0}
+- Class: 48
+  Script: {instanceID: 0}
+- Class: 64
+  Script: {instanceID: 0}
+- Class: 114
+  Script: {fileID: 11500000, guid: 3bd4d18010e1b584f8d273bed1f76c75, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 31c9f5ddfa72f6e48ba0f9b08caeb2a1, type: 3}
+- Class: 115
+  Script: {instanceID: 0}
+Assets:
+- Assets/resources/Circle.prefab
+- Assets/resources/ClientCircle.prefab
+- Assets/resources/GradientMat.mat
+Dependencies: []

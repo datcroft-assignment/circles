@@ -24,13 +24,13 @@ public class ClientTextureManager : MonoBehaviour, IClientObject
         return _textures[Id];
     }
 
-    void OnGUI()
-    {
-        // показываем число текстур в _textures
-        GUILayout.BeginArea(new Rect(0, 0, 200, 40));
-        GUILayout.TextArea("Объектов в _textures: " + _textures.Count);
-        GUILayout.EndArea();
-    }
+    //void OnGUI()
+    //{
+    //    // показываем число текстур в _textures
+    //    GUILayout.BeginArea(new Rect(0, 0, 200, 40));
+    //    GUILayout.TextArea("Объектов в _textures: " + _textures.Count);
+    //    GUILayout.EndArea();
+    //}
 
     public void ReceiveMessage(Envelope message)
     {

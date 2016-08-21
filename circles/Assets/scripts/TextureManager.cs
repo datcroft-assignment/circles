@@ -27,13 +27,13 @@ public class TextureManager : MonoBehaviour
         GameManager.I.DifficultyChanged += OnDifficultyChanged; // подписка на изменение сложности
     }
 
-    void OnGUI()
-    {
-        // показываем число текстур в _textures
-        GUILayout.BeginArea(new Rect(0, 0, 200, 40));
-        GUILayout.TextArea("Объектов в _textures: " + _textures.Count);
-        GUILayout.EndArea();
-    }
+    //void OnGUI()
+    //{
+    //    // показываем число текстур в _textures
+    //    GUILayout.BeginArea(new Rect(0, 0, 200, 40));
+    //    GUILayout.TextArea("Объектов в _textures: " + _textures.Count);
+    //    GUILayout.EndArea();
+    //}
 
     void OnDestroy()
     {

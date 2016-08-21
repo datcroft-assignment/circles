@@ -10,7 +10,7 @@ public class CircleBhv : MonoBehaviour
 
     private float _speed;
     private float _size;
-    private RenderTexture _rt;
+    private Texture2D _texture;
 
     void Start ()
     {
@@ -27,9 +27,12 @@ public class CircleBhv : MonoBehaviour
         if (rndFloat > 0.33)
             if (rndFloat > 0.66) texSize = TextureSize.Big;
             else texSize = TextureSize.Mid;
-        _rt = TextureManager.I.GetRandomTexture(texSize); // получем текстуру из менеджера
-        GetComponent<Renderer>().material.mainTexture = _rt;
+        _texture = TextureManager.I.GetRandomTexture(texSize); // получаем текстуру из менеджера
+        GetComponent<Renderer>().material.mainTexture = _texture;
         SendInstantiateRequest(); // просим всех клиентов создать экземпляры ClientCircle 
+        SendScaleRequest(); // установить им размер
+        SendSpeedRequest(); // скорость
+        SendSetTextureRequest(); // и текстуру
         GameServer.I.AfterNewClientConnected += OnAfterNewClientConnected; // подписываемся на подключение клиентов
     }
 
@@ -52,14 +55,14 @@ public class CircleBhv : MonoBehaviour
 
     void FixedUpdate()
     {
-        SendScaleAndPos(); // отправка координат и размера клиентам
+        SendPosRequest(); // отправка координат клиентам
     }
 
     void OnDestroy()
     {
-        TextureManager.I.ReleaseTexture(_rt);
-        SendDestroyRequest();
-        GameServer.I.AfterNewClientConnected -= OnAfterNewClientConnected;
+        TextureManager.I.ReleaseTexture(_texture); // освобождаем текстуру
+        SendDestroyRequest(); // просим клиентов удалить объект
+        GameServer.I.AfterNewClientConnected -= OnAfterNewClientConnected; // отписываемся от событий
     }
 
     // запрос на создание экземпляра ClientCircle. С параметром по умолчанию рассылается всем клиентам.
@@ -90,17 +93,66 @@ public class CircleBhv : MonoBehaviour
         GameServer.I.Send(env, clientId);
     }
 
-    // отправка координат и размера клиентам
-    void SendScaleAndPos(int clientId = -1)
+    // отправка координат клиентам
+    void SendPosRequest(int clientId = -1)
     {
         Envelope env = new Envelope();
         env.Addressee = AddresseeType.GameObject;
         env.SenderInstanceId = this.GetInstanceID();
         using (var ms = new MemoryStream())
         {
-            var request = new ClientCircleBhv.SetPosAndScaleRequest();
-            request.Scale = transform.localScale.ToArray();
-            request.Pos = transform.position.ToArray();
+            var request = new ClientCircleBhv.SetVector3Request();
+            request.Value = transform.position.ToArray();
+            request.ValueType = ClientCircleBhv.SetVector3Request.Type.Position;
+            (new BinaryFormatter()).Serialize(ms, request);
+            env.Data = ms.ToArray();
+        }
+        GameServer.I.Send(env, clientId);
+    }
+
+    // отправка размера клиентам
+    void SendScaleRequest(int clientId = -1)
+    {
+        Envelope env = new Envelope();
+        env.Addressee = AddresseeType.GameObject;
+        env.SenderInstanceId = this.GetInstanceID();
+        using (var ms = new MemoryStream())
+        {
+            var request = new ClientCircleBhv.SetVector3Request();
+            request.Value = transform.localScale.ToArray();
+            request.ValueType = ClientCircleBhv.SetVector3Request.Type.Scale;
+            (new BinaryFormatter()).Serialize(ms, request);
+            env.Data = ms.ToArray();
+        }
+        GameServer.I.Send(env, clientId);
+    }
+
+    // отправка скорости клиентам
+    void SendSpeedRequest(int clientId = -1)
+    {
+        Envelope env = new Envelope();
+        env.Addressee = AddresseeType.GameObject;
+        env.SenderInstanceId = this.GetInstanceID();
+        using (var ms = new MemoryStream())
+        {
+            var request = new ClientCircleBhv.SetVector3Request();
+            request.Value = new float[] {0, -_speed, 0};
+            request.ValueType = ClientCircleBhv.SetVector3Request.Type.Speed;
+            (new BinaryFormatter()).Serialize(ms, request);
+            env.Data = ms.ToArray();
+        }
+        GameServer.I.Send(env, clientId);
+    }
+
+    // запрос на установку текстуры
+    void SendSetTextureRequest(int clientId = -1)
+    {
+        Envelope env = new Envelope();
+        env.Addressee = AddresseeType.GameObject;
+        env.SenderInstanceId = this.GetInstanceID();
+        using (var ms = new MemoryStream())
+        {
+            var request = new ClientCircleBhv.SetTextureRequest(_texture.GetInstanceID());
             (new BinaryFormatter()).Serialize(ms, request);
             env.Data = ms.ToArray();
         }
@@ -110,6 +162,9 @@ public class CircleBhv : MonoBehaviour
     void OnAfterNewClientConnected(int clientId)
     {
         SendInstantiateRequest(clientId);
-        SendScaleAndPos(clientId);
+        SendScaleRequest(); 
+        SendSpeedRequest(); 
+        SendPosRequest();
+        SendSetTextureRequest(clientId);
     }
 }

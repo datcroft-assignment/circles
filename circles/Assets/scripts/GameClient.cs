@@ -18,14 +18,16 @@ public class GameClient : MonoBehaviour, IClientObject
     {
         _messages = new Queue<Envelope>();
         _clientObjects = new Dictionary<int, IClientObject>();
-        Application.runInBackground = true;
+        Application.runInBackground = true; // чтобы игра не остонавливалась при потере фокуса
     }
 
     void Start ()
     {
+        // подключение
         TcpClient client = new TcpClient();
         client.Connect("127.0.0.1", 2016);
         client.ReceiveTimeout = 10;
+        // запуск потока для получения сообщений
         _receiverThread = new Thread(() => ReceiveMessages(client));
         _receiverThread.Start();
     }
@@ -37,11 +39,12 @@ public class GameClient : MonoBehaviour, IClientObject
         {
             while (!_receiverThreadStopRequest)
             {
-                int length = br.ReadInt32();
-                byte[] data = br.ReadBytes(length);
-                Envelope msg = (new BinaryFormatter()).Deserialize(new MemoryStream(data)) as Envelope;
-                lock(_messages) _messages.Enqueue(msg);
+                int length = br.ReadInt32(); // получаем размер сообщения
+                byte[] data = br.ReadBytes(length); // получаем сообщение
+                Envelope msg = (new BinaryFormatter()).Deserialize(new MemoryStream(data)) as Envelope; // десериализуем
+                lock(_messages) _messages.Enqueue(msg); // отправляем в очередь полученных сообщений
             }
+            client.Close();
         }
     }
 
@@ -64,6 +67,9 @@ public class GameClient : MonoBehaviour, IClientObject
                 case AddresseeType.GameClient:
 	                ReceiveMessage(msg); // обрабатываем сообщение в этом объекте
                     break;
+                case AddresseeType.ClientTextureManager:
+                    ClientTextureManager.I.ReceiveMessage(msg); // передаем ClientTextureManager'у
+                        break;
                 default:
                     throw new Exception("Неизвестный тип адресата");
             }

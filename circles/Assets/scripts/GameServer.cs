@@ -18,7 +18,7 @@ public class GameServer : MonoBehaviour
     public event Action<int> AfterNewClientConnected;
 
     private List<TcpClient> _clients; // список подключенных клиентов
-    private Queue<TcpClient> _newClients; // список подключенных клиентов
+    private Queue<TcpClient> _newClients; // очередь новых клиентов
     private Thread _listenerThread; // поток приема приема новых клиентов
     private volatile bool _listenerThreadStopRequest;
     
@@ -29,7 +29,7 @@ public class GameServer : MonoBehaviour
         I = this;
         _clients = new List<TcpClient>();
         _newClients = new Queue<TcpClient>();
-        Application.runInBackground = true;
+        Application.runInBackground = true; // чтобы игра не остонавливалась при потере фокуса
     }
 
     void Start ()

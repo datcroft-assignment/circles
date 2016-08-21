@@ -7,35 +7,46 @@ using System.Runtime.Serialization.Formatters.Binary;
 
 public class ClientCircleBhv : MonoBehaviour, IClientObject
 {
-    private RenderTexture _rt;
     private bool _сoordsReceived; // были ли получены от сервера координаты
+    private Vector3 _speed;
     void Start ()
     {
-        _rt = TextureManager.I.GetRandomTexture(TextureSize.Mid);
-        GetComponent<Renderer>().material.mainTexture = _rt;
         gameObject.GetComponent<Renderer>().enabled = false;
     }
 
-    void OnDestroy()
+    void Update()
     {
-        TextureManager.I.ReleaseTexture(_rt);
+        transform.position += _speed * Time.deltaTime; // движение вниз
     }
 
     public void ReceiveMessage(Envelope message)
     {
         // сравниваем тип сообщения с поддерживаемыми получателем
         var body = (new BinaryFormatter()).Deserialize(new MemoryStream(message.Data));
-        if (body is SetPosAndScaleRequest)
+        if (body is SetVector3Request)
         {
-            // костыль для избавления от мерцания кружков в центре экрана
-            // кружок начинает отображаться после того, как впервые получены координаты
-            if (_сoordsReceived) gameObject.GetComponent<Renderer>().enabled = true;
-            _сoordsReceived = true;
-            // устанавливаем размер и координаты
-            var request = (SetPosAndScaleRequest)body;
-            transform.position = new Vector3(request.Pos[0], request.Pos[1], request.Pos[2]);
-            transform.localScale = new Vector3(request.Scale[0], request.Scale[1], request.Scale[2]);
-            
+            var request = (SetVector3Request)body;
+            switch (request.ValueType)
+            {
+                case SetVector3Request.Type.Scale:
+                    transform.localScale = new Vector3(request.Value[0], request.Value[1], request.Value[2]);
+                    break;
+                case SetVector3Request.Type.Position:
+                    transform.position = new Vector3(request.Value[0], request.Value[1], request.Value[2]);
+                    // костыль для избавления от мерцания кружков в центре экрана
+                    // кружок начинает отображаться после того, как впервые получены координаты
+                    if (_сoordsReceived) gameObject.GetComponent<Renderer>().enabled = true;
+                    _сoordsReceived = true;
+                    break;
+                case SetVector3Request.Type.Speed:
+                    _speed = new Vector3(request.Value[0], request.Value[1], request.Value[2]);
+                    break;
+            }    
+        }
+        else if (body is SetTextureRequest)
+        {
+            var request = (SetTextureRequest) body;
+            GetComponent<Renderer>().material.mainTexture = ClientTextureManager.I.GetTexture(request.TextureId);
         }
         else if (body is DestroyRequest)
         {
@@ -44,12 +55,26 @@ public class ClientCircleBhv : MonoBehaviour, IClientObject
         else throw new Exception("Неизвестный тип запроса");
     }
 
+    // запрос на установку скорости, размера или координат
     [Serializable]
-    public class SetPosAndScaleRequest
+    public class SetVector3Request
     {
         // Vector3 не сериализуемый, так что передаем вместо него массивы
-        public float[] Pos;
-        public float[] Scale;
+        public float[] Value;
+        public Type ValueType;
+        public enum Type {Position, Speed, Scale}
+    }
+
+    // запрос на установку текстуры
+    [Serializable]
+    public class SetTextureRequest
+    {
+        public int TextureId;
+
+        public SetTextureRequest(int textureId)
+        {
+            TextureId = textureId;
+        }
     }
 
     [Serializable]

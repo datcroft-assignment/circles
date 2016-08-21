@@ -43,6 +43,7 @@ public class GameServer : MonoBehaviour
 
     void FixedUpdate()
     {
+
         // новые клиенты добавляются через очередь для того, чтобы можно было инициировать события в главном потоке.
         lock (_newClients) while(_newClients.Count != 0)
         {
@@ -101,7 +102,6 @@ public class GameServer : MonoBehaviour
             cur.Close();
             _clients.Remove(cur);
         }
-        
     }
 }
 

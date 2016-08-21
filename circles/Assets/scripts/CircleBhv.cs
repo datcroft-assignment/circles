@@ -7,9 +7,11 @@ public class CircleBhv : MonoBehaviour
 {
     public FromToFloat Speed;
     public FromToFloat Size;
+    public FromToFloat Points;
 
     private float _speed;
     private float _size;
+    private int _points;
     private Texture2D _texture;
 
     void Start ()
@@ -18,9 +20,10 @@ public class CircleBhv : MonoBehaviour
         _size = Size.Lerp(rndFloat); // получаем случайное значение размера
         transform.localScale *= _size;
         _speed = Speed.Lerp(1 - rndFloat); // значение скорости, соответствующее размеру
+        _points = (int)Points.Lerp(1 - rndFloat); // количество очков за кружок
         // случайное расположение кружка вдоль верхней границы экрана
         float randPosAcrossScreen = 2 * (Random.value - 0.5f) * (Camera.main.aspect * Camera.main.orthographicSize - _size);
-        transform.position = new Vector3(randPosAcrossScreen, Camera.main.orthographicSize - _size, 0);
+        transform.position = new Vector3(randPosAcrossScreen, Camera.main.orthographicSize - _size, _size);
 
         // определяем размер текстуры
         var texSize = TextureSize.Small;
@@ -46,7 +49,11 @@ public class CircleBhv : MonoBehaviour
             Vector3 diff = cursorOnScene - transform.position; // расстояние между центром кружка и курсором
             diff.z = 0;
             cursorOnScene.z = 0;
-            if (diff.magnitude < _size) Destroy(gameObject);
+            if (diff.magnitude < _size)
+            {
+                GameManager.I.AddPoints(_points);
+                Destroy(gameObject);
+            }
         }
 
         if (transform.position.y < -Camera.main.orthographicSize + _size)

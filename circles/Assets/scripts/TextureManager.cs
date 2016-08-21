@@ -24,6 +24,7 @@ public class TextureManager : MonoBehaviour
     void Start()
     {
         GameServer.I.NewClientConnected += OnNewClientConnected; // подписка на подключение новых клиентов
+        GameManager.I.DifficultyChanged += OnDifficultyChanged; // подписка на изменение сложности
     }
 
     void OnGUI()
@@ -37,6 +38,7 @@ public class TextureManager : MonoBehaviour
     void OnDestroy()
     {
         GameServer.I.NewClientConnected -= OnNewClientConnected;
+        GameManager.I.DifficultyChanged -= OnDifficultyChanged;
     }
 
     // для получения ссылок на текстуры клиентскими классами
@@ -50,7 +52,9 @@ public class TextureManager : MonoBehaviour
         {
             res = GenTexture(size); // создаем новую текстуру
             SendCreateTextureRequest(res); // просим клиентов создать текстуры
-            _textures.Add(res, 1); // добавляем в коллекцию с начальным значением счетчика 1
+            // добавляем в коллекцию с начальным значением счетчика 2, чтобы текстура не удалялась
+            // до смены уровня сложности даже если её никто не использует
+            _textures.Add(res, 2); 
             return res;
         }
         // иначе берем ту, у которой наименьшее число ссылок
@@ -134,6 +138,13 @@ public class TextureManager : MonoBehaviour
     {
         // передаем новому клиенту все текстуры
         foreach (Texture2D cur in _textures.Keys) SendCreateTextureRequest(cur, clientId);
+    }
+
+    void OnDifficultyChanged()
+    {
+        // уменьшаем значение счетчика. Неиспользуемые текстуры будут удалены сразу, используемые останутся
+        // пока их не освободят использующие их объекты
+        foreach (var key in _textures.Keys.ToList()) ReleaseTexture(key);
     }
 }
 
